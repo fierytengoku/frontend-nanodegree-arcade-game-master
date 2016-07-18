@@ -5,6 +5,8 @@
 *   @this.sprite     location for enemy sprite image
 */
 
+//var currentScore = 0;
+
 var Enemy = function(x, y, speed) {
 
     this.speed = speed;
@@ -91,7 +93,7 @@ var Player = function () {
 
 };
 
-// Check player collision with enemy objects
+// Check player collision with enemy objects, reduce score and reset player
 
 Player.prototype.checkCollisions = function(allEnemies) {
 
@@ -99,6 +101,12 @@ Player.prototype.checkCollisions = function(allEnemies) {
 
     for (var i = 0; i < allEnemiesLength; i++) {
         if ((allEnemies[i].x + 50 >= this.x) && (allEnemies[i].x <= this.x + 50) && (allEnemies[i].y + 50 >= this.y) && (allEnemies[i].y <= this.y + 50)) {
+            var speedReset = 100;
+            for (var x = 0; x < 3; x++){
+            	allEnemies[x].speed = speedReset;
+            	speedReset += 100; 
+            }
+            drawScore(-999);	// Reset Score from enemy collision
             this.reset();
         }
     }
@@ -125,15 +133,40 @@ Player.prototype.update = function(dt) {
 // Reset player when there's collision with ocean border
         
     if (this.y < 67) {
+    	drawScore(10); // Add 10 points for completing a level
+
+    	for(i = 0; i < 3; i++){	// Increment enemy speeds for completing a level
+    		allEnemies[i].speed += 30;
+    	}
         this.reset();
     }
 
 };
 
-// Draw Player object on canvas
+// Clear and Draw Player score on screen/ track high score
+
+var SCORE = 0;
+var HIGH_SCORE = 0;
+
+function drawScore(points) {
+    SCORE += points;
+    if(SCORE <= 0){
+    	SCORE = 0;
+    }
+    if(SCORE > HIGH_SCORE){
+    	HIGH_SCORE = SCORE;
+    }
+    ctx.font = "32px serif";
+    ctx.clearRect(10, 590, 220, 700);
+    ctx.fillText("Score: " + SCORE, 10, 625);
+    ctx.fillText("High Score: " + HIGH_SCORE, 10, 675);
+}
+
+// Draw Player object and score board on canvas
 
 Player.prototype.render = function () {
 
+	drawScore(0);
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
 
 };
