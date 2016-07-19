@@ -1,11 +1,30 @@
+'use strict';
+
+var SCORE = 0;
+var HIGH_SCORE = 0;
+var ENEMY_X_INIT = 0;
+var ALL_ENEMIES = []; 
+var Y_LOC = [ENEMY_ONE_Y, ENEMY_TWO_Y, ENEMY_THREE_Y];
+var ENEM_SPEED_DIF = 100;
+var ENEMY_ONE_Y = 63;
+var ENEMY_TWO_Y = 145;
+var ENEMY_THREE_Y = 228;
+var ENEMY_LVL_SPEEDUP = 30;
+var PLAYER_OCEAN_Y_CONNECT = 67;
+var NUMBER_ENEMIES = 3;
+var PLAYER_BORDER_MAX = 400;
+var PLAYER_BORDER_MIN = 0;
+var PLAYER_X_INIT = 200;
+var PLAYER_Y_INIT = 400;
+var PLAYER_X_MOVE = 101;
+var PLAYER_Y_MOVE = 83;
+
 /** Enemies Constructor
 *   @this.speed      intial speed value for enemy objects
 *   @this.x          initial x-value for enemy starting position
 *   @this.y          initial y-value for enemy starting position
 *   @this.sprite     location for enemy sprite image
 */
-
-//var currentScore = 0;
 
 var Enemy = function(x, y, speed) {
 
@@ -39,11 +58,11 @@ Enemy.prototype.getRandomY = function(Pos){
 
     switch (Pos) {
         case 1:
-            return 63;
+            return ENEMY_ONE_Y;
         case 2:
-            return 145;
+            return ENEMY_TWO_Y;
         case 3:
-            return 228;
+            return ENEMY_THREE_Y;
     }
 
 };
@@ -52,8 +71,8 @@ Enemy.prototype.getRandomY = function(Pos){
 
 Enemy.prototype.reset = function() {
 
-    var x = -2;
-    var y = this.getRandomY(getRandomNum(1, 3));
+    var x = ENEMY_X_INIT - 2;	// Resets enemies a little off-screen after their first journey across the map
+    var y = this.getRandomY(this.getRandomNum(1, 3));
     this.x = x;
     this.y = y;
 
@@ -69,7 +88,7 @@ Enemy.prototype.render = function() {
 
 // A function to get a random number between min and max
 
-function getRandomNum(min, max) {
+Enemy.prototype.getRandomNum = function(min, max) {
 
     return Math.floor(Math.random() * (max - min + 1)) + min;
 
@@ -85,28 +104,28 @@ function getRandomNum(min, max) {
 
 var Player = function () { 
 
-    this.x_move = 101;
-    this.y_move = 83;
-    this.x = 200;
-    this.y = 400;
+    this.x_move = PLAYER_X_MOVE;
+    this.y_move = PLAYER_Y_MOVE;
+    this.x = PLAYER_X_INIT;
+    this.y = PLAYER_Y_INIT;
     this.sprite = 'images/char-princess-girl.png';
 
 };
 
 // Check player collision with enemy objects, reduce score and reset player
 
-Player.prototype.checkCollisions = function(allEnemies) {
+Player.prototype.checkCollisions = function(ALL_ENEMIES) {
 
-    var allEnemiesLength = allEnemies.length;
+    //var allEnemiesLength = allEnemies.length;
 
-    for (var i = 0; i < allEnemiesLength; i++) {
-        if ((allEnemies[i].x + 50 >= this.x) && (allEnemies[i].x <= this.x + 50) && (allEnemies[i].y + 50 >= this.y) && (allEnemies[i].y <= this.y + 50)) {
+    for (var i = 0; i < NUMBER_ENEMIES; i++) {
+        if ((ALL_ENEMIES[i].x + 50 >= this.x) && (ALL_ENEMIES[i].x <= this.x + 50) && (ALL_ENEMIES[i].y + 50 >= this.y) && (ALL_ENEMIES[i].y <= this.y + 50)) {
             var speedReset = 100;
-            for (var x = 0; x < 3; x++){
-            	allEnemies[x].speed = speedReset;
+            for (var x = 0; x < NUMBER_ENEMIES; x++){
+            	ALL_ENEMIES[x].speed = speedReset;
             	speedReset += 100; 
             }
-            drawScore(-999);	// Reset Score from enemy collision
+            this.drawScore(-999);	// Reset Score from enemy collision
             this.reset();
         }
     }
@@ -117,8 +136,8 @@ Player.prototype.checkCollisions = function(allEnemies) {
 
 Player.prototype.reset = function() {
 
-    this.x = 200;
-    this.y = 400;
+    this.x = PLAYER_X_INIT;
+    this.y = PLAYER_Y_INIT;
 
 };
 
@@ -128,15 +147,15 @@ Player.prototype.update = function(dt) {
 
 // Run checkCollisions function for player running into enemy objects
 
-    this.checkCollisions(allEnemies);
+    this.checkCollisions(ALL_ENEMIES);
 
 // Reset player when there's collision with ocean border
         
-    if (this.y < 67) {
-    	drawScore(10); // Add 10 points for completing a level
+    if (this.y < PLAYER_OCEAN_Y_CONNECT) {
+    	this.drawScore(10); // Add 10 points for completing a level
 
-    	for(i = 0; i < 3; i++){	// Increment enemy speeds for completing a level
-    		allEnemies[i].speed += 30;
+    	for(i = 0; i < NUMBER_ENEMIES; i++){	// Increment enemy speeds for completing a level
+    		ALL_ENEMIES[i].speed += ENEMY_LVL_SPEEDUP;
     	}
         this.reset();
     }
@@ -145,10 +164,10 @@ Player.prototype.update = function(dt) {
 
 // Clear and Draw Player score on screen/ track high score
 
-var SCORE = 0;
-var HIGH_SCORE = 0;
 
-function drawScore(points) {
+
+Player.prototype.drawScore = function(points) {
+
     SCORE += points;
     if(SCORE <= 0){
     	SCORE = 0;
@@ -160,13 +179,14 @@ function drawScore(points) {
     ctx.clearRect(10, 590, 220, 700);
     ctx.fillText("Score: " + SCORE, 10, 625);
     ctx.fillText("High Score: " + HIGH_SCORE, 10, 675);
-}
+
+};
 
 // Draw Player object and score board on canvas
 
 Player.prototype.render = function () {
 
-	drawScore(0);
+	this.drawScore(0);
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
 
 };
@@ -175,14 +195,14 @@ Player.prototype.render = function () {
 
 Player.prototype.handleInput = function(key){
 
-  if (key === 'up' && this.y > 0){             // Decrement y coordinate, checks boundary
-    this.y -= 83;
-  } else if (key === 'down' && this.y < 400){  // Increase y coordinate, checks boundary
-    this.y += 83;
-  } else if (key === 'left' && this.x > 0){    // Decrement x coordinate, checks boundary
-    this.x -= 101;
-  } else if (key === 'right' && this.x < 400){ // Increase x coordinate, checks boundary
-    this.x += 101; 
+  if (key === 'up' && this.y > PLAYER_BORDER_MIN){             // Decrement y coordinate, checks boundary
+    this.y -= PLAYER_Y_MOVE;
+  } else if (key === 'down' && this.y < PLAYER_BORDER_MAX){  // Increase y coordinate, checks boundary
+    this.y += PLAYER_Y_MOVE;
+  } else if (key === 'left' && this.x > PLAYER_BORDER_MIN){    // Decrement x coordinate, checks boundary
+    this.x -= PLAYER_X_MOVE;
+  } else if (key === 'right' && this.x < PLAYER_BORDER_MAX){ // Increase x coordinate, checks boundary
+    this.x += PLAYER_X_MOVE; 
   } else {
     console.log("key not recognized");
   }
@@ -195,17 +215,16 @@ var player = new Player();
 
 // Create an array of Enemy instances, setting initial location and speed
 
-var allEnemies = []; 
-var x_loc = 0;
-var y_loc = [63, 145, 228];
-var enem_speed = 100;
+//var allEnemies = []; 
+//var Y_LOC = [ENEMY_ONE_Y, ENEMY_TWO_Y, ENEMY_THREE_Y];
+//var ENEM_SPEED_DIF = 100;
 var enemy = new Enemy();
 
-for (i=0; i<3; i++) {
+for (var i=0; i<3; i++) {
     enemy = new Enemy();
-    allEnemies[i] = new Enemy(0, y_loc[i], enem_speed);
-    allEnemies.push(enemy);
-    enem_speed += 100;
+    ALL_ENEMIES[i] = new Enemy(ENEMY_X_INIT, Y_LOC[i], ENEM_SPEED_DIF);
+    ALL_ENEMIES.push(enemy);
+    ENEM_SPEED_DIF += 100;
 }
 
 // This listens for key presses and sends the keys to your
